@@ -1,0 +1,17 @@
+__pycache__
+ci
+.coverage
+.*/
+dist
+build
+*.pyc
+*.so
+*.c
+__config__.py
+
+.*/
+docs/build
+docs/**/generated/
+*/nodify.egg-info
+src/nodify/**/*.html
+src/nodify/_version.py
