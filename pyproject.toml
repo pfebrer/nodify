@@ -6,11 +6,9 @@ name = "nodify"
 description = "Supercharge your functional application with a powerful node system."
 readme = "README.md"
 license = {text = "MIT"}
-version = "0.0.3rc1"
+version = "0.0.3"
 
-dependencies = [
-    "numpy",
-]
+dependencies = []
 
 authors = [
     {name = "Pol Febrer", email = "pfebrer96@gmail.com"}
