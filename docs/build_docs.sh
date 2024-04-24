@@ -9,7 +9,7 @@ if [ -n "$PYTHONUSERBASE" ]; then
   export PYTHONPATH=$PYTHONUSERBASE/lib/python${v}/site-packages:$PYTHONPATH
 fi
 
-# Inform to the workflow visualization function that the 
+# Inform to the workflow visualization function that the
 # notebooks are to be exported to html
 export SISL_NODES_EXPORT_VIS=1
 
@@ -24,4 +24,3 @@ if [ $retval -eq 0 ]; then
 else
     echo "Failure = $retval"
 fi
-

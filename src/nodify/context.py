@@ -18,7 +18,7 @@ NODES_CONTEXT = dict(
     raise_custom_errors=False,
     # Function that will be called after node initialization.
     # The function will receive the node instance as its only argument.
-    on_init=None
+    on_init=None,
 )
 
 # Temporal contexts stack. It should not be used directly by users, the aim of this

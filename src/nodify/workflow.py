@@ -4,14 +4,13 @@ import html
 import inspect
 from collections import ChainMap
 from typing import Any, Dict, Iterable, List, Sequence, Tuple, Type, Union
-
 from warnings import warn
 
+from ._env import get_env_variable, register_env_variable
 from .context import temporal_context
-from ._env import register_env_variable, get_env_variable
 from .node import DummyInputValue, Node
-from .utils import traverse_tree_backward, traverse_tree_forward
 from .parse import nodify_func
+from .utils import traverse_tree_backward, traverse_tree_forward
 
 register_env_variable(
     "NODES_EXPORT_VIS",

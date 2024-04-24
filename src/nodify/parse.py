@@ -1,19 +1,13 @@
+import ast
 import inspect
 import textwrap
+from types import FunctionType
+from typing import Any, Callable, Optional, Type, Union
 from warnings import warn
 
-from types import FunctionType
-from typing import Any, Callable, Type, Union, Optional
+from .node import ConstantNode, Node
+from .syntax_nodes import ConditionalExpressionNode, DictNode, ListNode, TupleNode
 
-import ast
-
-from .node import Node, ConstantNode
-from .syntax_nodes import (
-    ConditionalExpressionNode,
-    DictNode,
-    ListNode,
-    TupleNode,
-)
 
 class NodeConverter(ast.NodeTransformer):
     """AST transformer that converts a function into a workflow."""
@@ -96,7 +90,7 @@ class NodeConverter(ast.NodeTransformer):
             ast.fix_missing_locations(node.value)
 
             return node
-        
+
         elif self.assign_fn is None:
             return self.generic_visit(node)
         else:
@@ -197,7 +191,7 @@ class NodeConverter(ast.NodeTransformer):
             return new_node
         else:
             return self.generic_visit(node)
-    
+
     # def visit_Compare(self, node: ast.Compare) -> Any:
     #     """Converts the comparison syntax into CompareNode call."""
     #     if len(node.ops) > 1:
@@ -270,12 +264,15 @@ def nodify_func(
     # Make sure the first line is at the 0 indentation level.
     code = textwrap.dedent(code)
 
-    code_obj = nodify_code(code, transformer_cls, assign_fn, node_cls, namespace=func_namespace)
+    code_obj = nodify_code(
+        code, transformer_cls, assign_fn, node_cls, namespace=func_namespace
+    )
 
     # Execute the code, and retrieve the new function from the namespace.
     exec(code_obj, func_namespace)
 
     return func_namespace[func.__name__]
+
 
 def nodify_code(
     code: str,
@@ -318,20 +315,27 @@ def nodify_code(
         node_cls_name += "_"
 
     # Transform the AST.
-    transformer = transformer_cls(assign_fn=assign_fn_key, node_cls_name=node_cls_name, nodify_constants=nodify_constants, nodify_constant_assignments=nodify_constant_assignments)
+    transformer = transformer_cls(
+        assign_fn=assign_fn_key,
+        node_cls_name=node_cls_name,
+        nodify_constants=nodify_constants,
+        nodify_constant_assignments=nodify_constant_assignments,
+    )
     new_tree = transformer.visit(tree)
 
     # Add the needed variables into the namespace.
-    namespace.update({
-        node_cls_name: node_cls,
-        "ListNode": ListNode,
-        "TupleNode": TupleNode,
-        "DictNode": DictNode,
-        "ConditionalExpressionNode": ConditionalExpressionNode,
-        "ConstantNode": ConstantNode,
-        # "CompareNode": CompareNode,
-        **namespace,
-    })
+    namespace.update(
+        {
+            node_cls_name: node_cls,
+            "ListNode": ListNode,
+            "TupleNode": TupleNode,
+            "DictNode": DictNode,
+            "ConditionalExpressionNode": ConditionalExpressionNode,
+            "ConstantNode": ConstantNode,
+            # "CompareNode": CompareNode,
+            **namespace,
+        }
+    )
 
     if assign_fn_key is not None:
         namespace[assign_fn_key] = assign_fn

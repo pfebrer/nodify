@@ -22,13 +22,13 @@ jobs:
   build_wheels:
     name: Wheel building
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: false
-          
+
       - name: Build wheel and source distribution
         run: pipx run build
 
@@ -37,7 +37,7 @@ jobs:
         with:
           name: build-artifact
           path: dist/*
-          
+
   # Upload to testpypi
   upload_testpypi:
     needs: [build_wheels]

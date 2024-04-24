@@ -1,5 +1,3 @@
-
-
 class NodeClassRegistry:
     """Keeps track of the node classes that are defined.
 

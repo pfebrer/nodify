@@ -5,11 +5,12 @@ from typing import Any, Dict
 
 from .node import Node
 
+
 class ListNode(Node):
     @staticmethod
     def function(*items):
         return list(items)
-    
+
     def get_syntax(self, *items):
         return repr(list(items))
 
@@ -18,7 +19,7 @@ class TupleNode(Node):
     @staticmethod
     def function(*items):
         return tuple(items)
-    
+
     def get_syntax(self, *items):
         return repr(tuple(items))
 
@@ -27,7 +28,7 @@ class DictNode(Node):
     @staticmethod
     def function(**items):
         return items
-    
+
     def get_syntax(self, **items):
         return repr(items)
 
@@ -173,13 +174,13 @@ class BinaryOperationNode(Node):
     @staticmethod
     def function(left, op: str, right):
         return getattr(operator, op)(left, right)
-    
+
     def get_syntax(self, left, op, right):
         if not isinstance(op, str):
             raise ValueError(f"Invalid operator: {op}")
         return f"{repr(left)} {self._op_to_symbol[op]} {repr(right)}"
 
- 
+
 class UnaryOperationNode(Node):
     _op_to_symbol = {
         "invert": "~",
@@ -190,17 +191,18 @@ class UnaryOperationNode(Node):
     @staticmethod
     def function(op: str, operand):
         return getattr(operator, op)(operand)
-    
+
     def get_syntax(self, op, operand):
         if not isinstance(op, str):
             raise ValueError(f"Invalid operator: {op}")
         return f"{self._op_to_symbol[op]}{repr(operand)}"
 
+
 class GetItemNode(Node):
     @staticmethod
     def function(obj: Any, key: Any):
         return obj[key]
-    
+
     def get_syntax(self, obj, key):
         return f"{repr(obj)}[{repr(key)}]"
 
@@ -209,6 +211,6 @@ class GetAttrNode(Node):
     @staticmethod
     def function(obj: Any, key: str):
         return getattr(obj, key)
-    
+
     def get_syntax(self, obj, key):
         return f"{repr(obj)}.{key}"

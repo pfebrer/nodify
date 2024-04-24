@@ -7,9 +7,10 @@ from io import StringIO
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 from .context import NODES_CONTEXT, NodeContext
-from .errors import NodeError, NodeCalcError
+from .errors import NodeCalcError, NodeError
 from .operators import OperatorsMixin
 from .registry import REGISTRY
+
 
 class _TimeFilter(logging.Filter):
     """A helper class to keep the last time a log was emitted.
@@ -38,6 +39,7 @@ class _TimeFilter(logging.Filter):
 
         self.last = record.relativeCreated
         return True
+
 
 class Node(OperatorsMixin):
     """Generic class for nodes.
@@ -112,10 +114,9 @@ class Node(OperatorsMixin):
 
         if not lazy_init:
             self.get()
-        
+
         if self.context["on_init"] is not None:
             self.context["on_init"](self)
-
 
     def __call__(self, *args, **kwargs):
         self.update_inputs(*args, **kwargs)
@@ -125,7 +126,7 @@ class Node(OperatorsMixin):
         """Sets up the node based on its initial inputs."""
         # Parse inputs into arguments.
         bound_params = inspect.signature(self.function).bind_partial(*args, **kwargs)
-        #bound_params.apply_defaults()
+        # bound_params.apply_defaults()
 
         self._inputs = bound_params.arguments
 
@@ -603,12 +604,14 @@ class Node(OperatorsMixin):
 
     def __getitem__(self, key):
         from .syntax_nodes import GetItemNode
+
         return GetItemNode(obj=self, key=key)
 
     def __getattr__(self, key):
         if key.startswith("_"):
             raise super().__getattr__(key)
         from .syntax_nodes import GetAttrNode
+
         return GetAttrNode(obj=self, key=key)
 
     def _update_connections(self, inputs):

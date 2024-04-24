@@ -24,4 +24,3 @@ class NodeInputError(NodeError):
     def __str__(self):
         # Should make this more specific
         return f"Some input is not right in {self._node} and could not be parsed"
-    

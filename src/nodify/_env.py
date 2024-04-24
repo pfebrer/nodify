@@ -1,8 +1,8 @@
-from typing import Any, Optional, Callable
-
 import os
+from typing import Any, Callable, Optional
 
 NODES_ENV_VARIABLES = {}
+
 
 def register_env_variable(
     name: str,

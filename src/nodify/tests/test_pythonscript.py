@@ -1,21 +1,26 @@
 """Test the functionality to go from nodes to a python script and back."""
+
 import pytest
 
 from nodify import Node
-from nodify.node import ConstantNode
 from nodify.conversions import node_to_python_script
+from nodify.node import ConstantNode
+
 
 @Node.from_func
 def simple_function():
     return 2
 
+
 @Node.from_func
 def kwargs_function(a=None, **kwargs):
     return kwargs if kwargs else a
 
+
 @Node.from_func
 def args_function(*args, kwarg=None):
     return tuple(args) if args else kwarg
+
 
 def get_complex_tree():
     """Returns a hard case, containing *args, **kwargs, nested nodes
@@ -29,6 +34,7 @@ def get_complex_tree():
     n = kwargs_function(a=a, args=b, c=c)
 
     return n
+
 
 constant = ConstantNode(2)
 constant_dict = ConstantNode({"a": 2, "b": 4})
@@ -49,20 +55,24 @@ nodes = {
     "getitem": constant_dict["a"],
 }
 
+
 @pytest.fixture(scope="module", params=list(nodes))
 def node(request):
     return nodes[request.param]
+
 
 @pytest.fixture(scope="module", params=[None, "final_result", "function"])
 def final_key(request):
     return request.param
 
+
 @pytest.fixture(scope="module")
 def names_map(node, final_key):
     if final_key is not None:
         return {id(node): final_key}
-    else: 
+    else:
         return {}
+
 
 def test_as_script(node, names_map, final_key):
     """Tests the mode of generating a sequential script."""
@@ -73,9 +83,11 @@ def test_as_script(node, names_map, final_key):
     assert final_key in env
     assert env[final_key] == node.get()
 
+
 @pytest.fixture(scope="module", params=[None, "my_workflow"])
 def function_name(request):
     return request.param
+
 
 def test_as_function(node, function_name):
     """Tests the mode of generating the code for a function."""
