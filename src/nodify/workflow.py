@@ -918,11 +918,11 @@ class Workflow(Node):
 
         # Get the workflow function
         work_func = cls.function
-        # Nodify it, passing the middleware function that will assign the variables to the workflow.
-        work_func = nodify_func(work_func, assign_fn=assign_workflow_var)
-
         # Get the signature of the function.
         sig = inspect.signature(work_func)
+
+        # Nodify it, passing the middleware function that will assign the variables to the workflow.
+        work_func = nodify_func(work_func, assign_fn=assign_workflow_var)
 
         # Run a dryrun of the workflow, so that we can understand how the nodes are connected.
         # To this end, nodes must behave lazily.

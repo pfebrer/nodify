@@ -32,6 +32,7 @@ class NodeConverter(ast.NodeTransformer):
         constant_cls: str = "ConstantNode",
         nodify_constants: bool = False,
         nodify_constant_assignments: bool = False,
+        remove_function_annotations: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -41,6 +42,7 @@ class NodeConverter(ast.NodeTransformer):
         self.constant_cls = constant_cls
         self.nodify_constants = nodify_constants
         self.nodify_constant_assignments = nodify_constant_assignments
+        self.remove_function_annotations = remove_function_annotations
 
     def visit_Call(self, node):
         """Converts some_module.some_attr(some_args) into Node.from_func(some_module.some_attr)(some_args)"""
@@ -177,7 +179,6 @@ class NodeConverter(ast.NodeTransformer):
 
     def visit_Constant(self, node: ast.Constant) -> Any:
         if self.nodify_constants:
-            print(ast.dump(node))
             new_node = ast.Call(
                 func=ast.Name(id=self.constant_cls, ctx=ast.Load()),
                 args=[node],
@@ -186,11 +187,29 @@ class NodeConverter(ast.NodeTransformer):
 
             ast.fix_missing_locations(new_node)
 
-            print(ast.dump(new_node))
-
             return new_node
         else:
             return self.generic_visit(node)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
+
+        if self.remove_function_annotations:
+
+            def _remove_annotation(arg):
+                arg.annotation = None
+                return arg
+
+            node.args.args = [_remove_annotation(arg) for arg in node.args.args]
+            node.args.kwonlyargs = [
+                _remove_annotation(arg) for arg in node.args.kwonlyargs
+            ]
+            node.args.posonlyargs = [
+                _remove_annotation(arg) for arg in node.args.posonlyargs
+            ]
+
+            node.returns = None
+
+        return self.generic_visit(node)
 
     # def visit_Compare(self, node: ast.Compare) -> Any:
     #     """Converts the comparison syntax into CompareNode call."""
@@ -264,14 +283,25 @@ def nodify_func(
     # Make sure the first line is at the 0 indentation level.
     code = textwrap.dedent(code)
 
+    old_signature = inspect.signature(func)
+
     code_obj = nodify_code(
-        code, transformer_cls, assign_fn, node_cls, namespace=func_namespace
+        code,
+        transformer_cls,
+        assign_fn,
+        node_cls,
+        remove_function_annotations=True,
+        namespace=func_namespace,
     )
 
     # Execute the code, and retrieve the new function from the namespace.
     exec(code_obj, func_namespace)
 
-    return func_namespace[func.__name__]
+    new_func = func_namespace[func.__name__]
+
+    new_func.__signature__ = old_signature
+
+    return new_func
 
 
 def nodify_code(
@@ -281,6 +311,7 @@ def nodify_code(
     node_cls: Type[Node] = Node,
     nodify_constants: bool = False,
     nodify_constant_assignments: bool = False,
+    remove_function_annotations: bool = False,
     namespace: Optional[dict] = None,
 ):
     if namespace is None:
@@ -320,6 +351,7 @@ def nodify_code(
         node_cls_name=node_cls_name,
         nodify_constants=nodify_constants,
         nodify_constant_assignments=nodify_constant_assignments,
+        remove_function_annotations=remove_function_annotations,
     )
     new_tree = transformer.visit(tree)
 

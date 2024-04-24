@@ -13,7 +13,8 @@ from nodify.utils import traverse_tree_forward
 
 
 @pytest.fixture(
-    scope="module", params=["from_func", "explicit_class", "input_operations"]
+    scope="module",
+    params=["from_func", "explicit_class", "input_operations", "with_annotations"],
 )
 def triple_sum(request) -> Type[Workflow]:
     """Returns a workflow that computes a triple sum.
@@ -51,6 +52,17 @@ def triple_sum(request) -> Type[Workflow]:
 
             @Workflow.from_func
             def triple_sum(a, b, c):
+                first_sum = a + b
+                return first_sum + c
+
+        triple_sum._sum_key = "BinaryOperationNode"
+
+    elif request.param == "with_annotations":
+
+        with pytest.warns():
+
+            @Workflow.from_func
+            def triple_sum(a: int, b: int, c: int) -> int:
                 first_sum = a + b
                 return first_sum + c
 
