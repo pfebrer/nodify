@@ -5,15 +5,15 @@ requires-python = ">=3.9"
 name = "nodify"
 description = "Supercharge your functional application with a powerful node system."
 readme = "README.md"
-license = {text = "MIT"}
-version = "0.0.3"
+license = {text = "MIT", file = "LICENSE"}
+version = "0.0.4"
 
 dependencies = []
 
 authors = [
     {name = "Pol Febrer", email = "pfebrer96@gmail.com"}
 ]
-maintainers = [{name="Pol Febrer"}]
+maintainers = [{name="Pol Febrer", email = "pfebrer96@gmail.com"}]
 
 classifiers = [
     "Programming Language :: Python :: 3.9",
@@ -23,6 +23,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[project.urls]
+Homepage = "https://github.com/pfebrer/nodify"
+Repository = "https://github.com/pfebrer/nodify"
 
 [project.optional-dependencies]
 
