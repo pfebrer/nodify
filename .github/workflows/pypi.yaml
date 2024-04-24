@@ -71,10 +71,11 @@ jobs:
       # We should also wait for index to update on remote server
       - name: Install nodify
         run: |
-          sleep 10
+          # Sleep 20s to make sure that the package can be found in testpypi
+          sleep 20
           version=${GITHUB_REF#refs/*/v}
           version=${version#refs/*/}
-          python -m pip install --progress-bar=off --find-links dist --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ nodify[test]==${version}
+          python -m pip install --index-url https://test.pypi.org/simple/ nodify[test]==${version}
 
       - name: Test the installation
         run: |
