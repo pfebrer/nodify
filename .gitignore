@@ -10,6 +10,7 @@ build
 __config__.py
 
 .*/
+!/.github/
 docs/build
 docs/**/generated/
 */nodify.egg-info

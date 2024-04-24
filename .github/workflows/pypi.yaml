@@ -1,0 +1,104 @@
+name: Wheel creation and publishing
+
+# Change this to whatever you want
+on:
+  push:
+    tags:
+     - 'v*'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Which branch to build wheels for'
+        required: false
+        default: 'main'
+      release:
+        description: 'Whether to release, or not?'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+
+  build_wheels:
+    name: Wheel building
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+          
+      - name: Build wheel and source distribution
+        run: pipx run build
+
+      # Upload the wheel to the action's articfact.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{ matrix.os }}
+          path: dist/*
+          
+  # Upload to testpypi
+  upload_testpypi:
+    needs: [build_wheels]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    name: Publish package to TestPyPI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@v1.8.11
+        with:
+          user: __token__
+          password: ${{ secrets.TESTPYPI_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+
+  # Check that the testpypi installation works
+  test_testpypi:
+    needs: [upload_testpypi]
+    name: Test installation from TestPyPi
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifact
+          path: dist
+
+      - name: Python installation
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      # We should also wait for index to update on remote server
+      - name: Install nodify
+        run: |
+          sleep 10
+          version=${GITHUB_REF#refs/*/v}
+          version=${version#refs/*/}
+          python -m pip install --progress-bar=off --find-links dist --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ nodify[test]==${version}
+
+      - name: Test the installation
+        run: |
+          pytest --pyargs nodify
+
+  # # Upload to PyPI on every tag
+  # upload_pypi:
+  #   needs: [test_testpypi]
+  #   name: Publish package to Pypi
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+  #   # alternatively, to publish when a GitHub Release is created, use the following rule:
+  #   # if: github.event_name == 'release' && github.event.action == 'published'
+  #   steps:
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: artifact
+  #         path: dist
+
+  #     - uses: pypa/gh-action-pypi-publish@v1.8.11
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.PYPI_TOKEN }}
