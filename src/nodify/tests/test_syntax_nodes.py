@@ -2,29 +2,29 @@ from __future__ import annotations
 
 from nodify.node import ConstantNode
 from nodify.syntax_nodes import (
-    CompareSyntaxNode,
-    ConditionalExpressionSyntaxNode,
-    DictSyntaxNode,
-    ListSyntaxNode,
-    TupleSyntaxNode,
+    CompareNode,
+    ConditionalExpressionNode,
+    DictNode,
+    ListNode,
+    TupleNode,
 )
 from nodify.workflow import Workflow
 
 
 def test_list_syntax_node():
-    assert ListSyntaxNode("a", "b", "c").get() == ["a", "b", "c"]
+    assert ListNode("a", "b", "c").get() == ["a", "b", "c"]
 
 
 def test_tuple_syntax_node():
-    assert TupleSyntaxNode("a", "b", "c").get() == ("a", "b", "c")
+    assert TupleNode("a", "b", "c").get() == ("a", "b", "c")
 
 
 def test_dict_syntax_node():
-    assert DictSyntaxNode(a="b", c="d", e="f").get() == {"a": "b", "c": "d", "e": "f"}
+    assert DictNode(a="b", c="d", e="f").get() == {"a": "b", "c": "d", "e": "f"}
 
 
 def test_cond_expr_node():
-    node = ConditionalExpressionSyntaxNode(test=True, true=1, false=2)
+    node = ConditionalExpressionNode(test=True, true=1, false=2)
 
     assert node.get() == 1
     node.update_inputs(test=False)
@@ -39,7 +39,7 @@ def test_cond_expr_node():
     input1 = ConstantNode(1)
     input2 = ConstantNode(2)
 
-    node = ConditionalExpressionSyntaxNode(test=True, true=input1, false=input2)
+    node = ConditionalExpressionNode(test=True, true=input1, false=input2)
 
     assert node.get() == 1
     assert input1._nupdates == 1
@@ -47,12 +47,12 @@ def test_cond_expr_node():
 
 
 def test_compare_syntax_node():
-    assert CompareSyntaxNode(1, "eq", 2).get() == False
-    assert CompareSyntaxNode(1, "ne", 2).get() == True
-    assert CompareSyntaxNode(1, "gt", 2).get() == False
-    assert CompareSyntaxNode(1, "lt", 2).get() == True
-    assert CompareSyntaxNode(1, "ge", 2).get() == False
-    assert CompareSyntaxNode(1, "le", 2).get() == True
+    assert CompareNode(1, "eq", 2).get() == False
+    assert CompareNode(1, "ne", 2).get() == True
+    assert CompareNode(1, "gt", 2).get() == False
+    assert CompareNode(1, "lt", 2).get() == True
+    assert CompareNode(1, "ge", 2).get() == False
+    assert CompareNode(1, "le", 2).get() == True
 
 
 def test_workflow_with_syntax():

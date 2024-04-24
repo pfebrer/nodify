@@ -7,7 +7,7 @@ from typing import Type
 
 import pytest
 
-from nodify import Node, Workflow
+from nodify import Workflow
 from nodify.node import ConstantNode
 from nodify.utils import traverse_tree_forward
 
@@ -54,7 +54,7 @@ def triple_sum(request) -> Type[Workflow]:
                 first_sum = a + b
                 return first_sum + c
 
-        triple_sum._sum_key = "UfuncNode"
+        triple_sum._sum_key = "BinaryOperationNode"
 
     return triple_sum
 

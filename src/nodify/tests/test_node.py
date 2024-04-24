@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from nodify import Node, temporal_context
-from nodify.node import GetItemNode
+from nodify.syntax_nodes import GetItemNode
 
 
 @pytest.fixture(scope="module", params=["explicit_class", "from_func"])

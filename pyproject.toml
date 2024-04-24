@@ -59,6 +59,10 @@ scripting = [
     "isort",
 ]
 
+files = [
+    "watchdog",
+]
+
 test = [
     "pytest",
     "coverage[toml]",
@@ -67,6 +71,7 @@ test = [
     "pytest-faulthandler",
     "black",
     "isort",
+    "watchdog",
 ]
 
 
