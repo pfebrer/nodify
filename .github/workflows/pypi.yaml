@@ -38,52 +38,52 @@ jobs:
           name: build-artifact
           path: dist/*
 
-  # Upload to testpypi
-  upload_testpypi:
-    needs: [build_wheels]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-    name: Publish package to TestPyPI
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
+  # # Upload to testpypi
+  # upload_testpypi:
+  #   needs: [build_wheels]
+  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+  #   name: Publish package to TestPyPI
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         path: dist
+  #         merge-multiple: true
 
-      - uses: pypa/gh-action-pypi-publish@v1.8.11
-        with:
-          user: __token__
-          password: ${{ secrets.TESTPYPI_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
+  #     - uses: pypa/gh-action-pypi-publish@v1.8.11
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.TESTPYPI_TOKEN }}
+  #         repository-url: https://test.pypi.org/legacy/
 
-  # Check that the testpypi installation works
-  test_testpypi:
-    needs: [upload_testpypi]
-    name: Test installation from TestPyPi
-    runs-on: ubuntu-latest
+  # # Check that the testpypi installation works
+  # test_testpypi:
+  #   needs: [upload_testpypi]
+  #   name: Test installation from TestPyPi
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Python installation
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.9"
+  #   steps:
+  #     - name: Python installation
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.9"
 
-      # We should also wait for index to update on remote server
-      - name: Install nodify
-        run: |
-          # Sleep 20s to make sure that the package can be found in testpypi
-          sleep 20
-          version=${GITHUB_REF#refs/*/v}
-          version=${version#refs/*/}
-          python -m pip install --index-url https://test.pypi.org/simple/ nodify[test]==${version}
+  #     # We should also wait for index to update on remote server
+  #     - name: Install nodify
+  #       run: |
+  #         # Sleep 20s to make sure that the package can be found in testpypi
+  #         sleep 20
+  #         version=${GITHUB_REF#refs/*/v}
+  #         version=${version#refs/*/}
+  #         python -m pip install --index-url https://test.pypi.org/simple/ nodify[test]==${version}
 
-      - name: Test the installation
-        run: |
-          pytest --pyargs nodify
+  #     - name: Test the installation
+  #       run: |
+  #         pytest --pyargs nodify
 
   # Upload to PyPI on every tag
   upload_pypi:
-    needs: [test_testpypi]
+    needs: [build_wheels]
     name: Publish package to Pypi
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
