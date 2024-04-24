@@ -5,7 +5,7 @@ requires-python = ">=3.9"
 name = "nodify"
 description = "Supercharge your functional application with a powerful node system."
 readme = "README.md"
-license = {text = "MIT", file = "LICENSE"}
+license = {file = "LICENSE"}
 version = "0.0.4"
 
 dependencies = []
