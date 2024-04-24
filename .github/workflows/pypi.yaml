@@ -48,7 +48,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
-          merge_multiple: true
+          merge-multiple: true
 
       - uses: pypa/gh-action-pypi-publish@v1.8.11
         with:
