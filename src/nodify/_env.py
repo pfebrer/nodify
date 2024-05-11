@@ -28,10 +28,10 @@ def register_env_variable(
     Raises
     ------
     ValueError
-       if `name` does not start with "NODES_"
+       if `name` does not start with "NODIFY_"
     """
-    if not name.startswith("NODES_"):
-        raise ValueError("register_environ_variable: name should start with 'NODES_'")
+    if not name.startswith("NODIFY_"):
+        raise ValueError("register_environ_variable: name should start with 'NODIFY_'")
     if process is None:
 
         def process(arg: Any) -> Any:

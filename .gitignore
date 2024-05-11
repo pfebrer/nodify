@@ -11,7 +11,7 @@ __config__.py
 
 .*/
 !/.github/
-docs/build
+docs/_build
 docs/**/generated/
 */nodify.egg-info
 src/nodify/**/*.html

@@ -13,7 +13,7 @@ from .parse import nodify_func
 from .utils import traverse_tree_backward, traverse_tree_forward
 
 register_env_variable(
-    "NODES_EXPORT_VIS",
+    "NODIFY_EXPORT_VIS",
     default=False,
     description="Whether the visualizations of the networks in notebooks are meant to be exported.",
 )
