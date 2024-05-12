@@ -131,7 +131,7 @@ def node_to_python_script(
         variables,
         include_defaults: bool = False,
         as_function: bool = False,
-        function_name: Optional[str] = "function",
+        function_name: Optional[str] = None,
     ):
 
         # Avoid duplicate variable names and create a list with all names
@@ -200,16 +200,21 @@ def node_to_python_script(
         )
         script += "\n\n"
 
-        def _write_func(func, script):
+        def _write_func(func, include_vardef: bool = True):
+            script = ""
 
             if func.get("get_syntax") is not None:
                 try:
-                    script += f"{func['key']} = {func['get_syntax'](*func['args'], **func['kwargs'])}\n"
+                    if include_vardef:
+                        script += f"{func['key']} = "
+                    script += f"{func['get_syntax'](*func['args'], **func['kwargs'])}\n"
                     return script
                 except Exception as e:
                     pass
 
-            script += f"{func['key']} = {func.get('script_name', func['name'])}("
+            if include_vardef:
+                script += f"{func['key']} = "
+            script += f"{func.get('script_name', func['name'])}("
 
             # Add positional args
             if len(func["args"]) > 0:
@@ -240,25 +245,37 @@ def node_to_python_script(
 
         if as_function:
 
-            original_name = function_name or "function"
-            function_name = original_name
-            i = 1
-            while function_name in [*variable_names, *function_modules]:
-                function_name += f"_{i}"
-                i += 1
+            # Determine function name
+            if (
+                function_name is None
+                and len(functions) > 0
+                and functions[-1]["key"] != "output"
+            ):
+                function_name = functions[-1]["key"]
+            else:
+                if function_name is None:
+                    function_name = "function"
 
+                original_name = function_name
+                i = 1
+                while function_name in [*variable_names, *function_modules]:
+                    function_name = original_name + f"_{i}"
+                    i += 1
+
+            # Proceed to write the script
             script += f"def {function_name}("
             script += ",".join(
                 [f"{const['key']}={repr(const['value'])}" for const in constants]
             )
             script += "):\n"
 
-            for func in functions:
-                script += "    "
-                script = _write_func(func, script)
-                script += "\n"
+            if len(functions) > 0:
+                for func in functions[:-1]:
+                    script += "    "
+                    script += _write_func(func)
+                    script += "\n"
 
-            script += f"    return {functions[-1]['key'] if len(functions) > 0 else constants[0]['key']}"
+            script += f"    return {_write_func(functions[-1], include_vardef=False) if len(functions) > 0 else constants[0]['key']}"
 
         else:
             script += (
@@ -272,7 +289,7 @@ def node_to_python_script(
             )
 
             for func in functions:
-                script = _write_func(func, script)
+                script += _write_func(func)
                 script += "\n"
 
         return script
