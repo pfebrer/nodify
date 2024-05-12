@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import operator
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 
 from .node import Node
 
@@ -126,6 +126,9 @@ class ConditionalExpressionNode(Node):
         return "if/else"
 
 
+_CompareOp = Literal["eq", "ne", "gt", "lt", "ge", "le", "is_", "is_not", "contains"]
+
+
 class CompareNode(Node):
     _op_to_symbol = {
         "eq": "==",
@@ -146,12 +149,28 @@ class CompareNode(Node):
         return f"{repr(left)} {self._op_to_symbol[op]} {repr(right)}"
 
     @staticmethod
-    def function(left, op: str, right):
+    def function(left, op: _CompareOp, right):
         return getattr(operator, op)(left, right)
 
     def get_diagram_label(self):
         """Returns the label to be used in diagrams when displaying this node."""
         return self._op_to_symbol.get(self._prev_evaluated_inputs.get("op"))
+
+
+_BynaryOp = Literal[
+    "add",
+    "sub",
+    "mul",
+    "truediv",
+    "floordiv",
+    "mod",
+    "pow",
+    "lshift",
+    "rshift",
+    "and",
+    "xor",
+    "or",
+]
 
 
 class BinaryOperationNode(Node):
@@ -172,13 +191,16 @@ class BinaryOperationNode(Node):
     }
 
     @staticmethod
-    def function(left, op: str, right):
+    def function(left, op: _BynaryOp, right):
         return getattr(operator, op)(left, right)
 
     def get_syntax(self, left, op, right):
         if not isinstance(op, str):
             raise ValueError(f"Invalid operator: {op}")
         return f"{repr(left)} {self._op_to_symbol[op]} {repr(right)}"
+
+
+_UnaryOp = Literal["invert", "neg", "pos"]
 
 
 class UnaryOperationNode(Node):
@@ -189,7 +211,7 @@ class UnaryOperationNode(Node):
     }
 
     @staticmethod
-    def function(op: str, operand):
+    def function(op: _UnaryOp, operand):
         return getattr(operator, op)(operand)
 
     def get_syntax(self, op, operand):
