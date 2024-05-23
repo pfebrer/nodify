@@ -14,7 +14,8 @@ def build_cli(title, description, defaults, modules=[]):
         parser.add_argument(
             "modules",
             type=str,
-            nargs="?",
+            nargs="*",
+            default=defaults.get("modules", ["f"]),
             help="Modules to nodify before launching the GUI",
         )
         parser.add_argument(
@@ -58,10 +59,7 @@ def build_cli(title, description, defaults, modules=[]):
 
         args = parser.parse_args()
 
-        if not hasattr(args, "modules"):
-            modules_to_nodify = [*modules, defaults.get("modules", [])]
-        else:
-            modules_to_nodify = [*modules, args.modules]
+        modules_to_nodify = [*modules, *(args.modules or [])]
 
         # Nodify all requested modules
         for module_string in modules_to_nodify:

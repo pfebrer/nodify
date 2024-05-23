@@ -6,7 +6,7 @@ name = "nodify"
 description = "Supercharge your functional application with a powerful node system."
 readme = "README.md"
 license = {file = "LICENSE"}
-version = "0.0.7"
+version = "0.0.8"
 
 dependencies = []
 
@@ -73,6 +73,9 @@ gui = [
 
 [project.scripts]
 nodify-gui = "nodify.gui.cli:nodify_gui_cli"
+
+[tool.setuptools.package-data]
+"nodify.gui" = ["build/*", "build/static/*/*"]
 
 
 [tool.pytest.ini_options]
