@@ -6,7 +6,7 @@ name = "nodify"
 description = "Supercharge your functional application with a powerful node system."
 readme = "README.md"
 license = {file = "LICENSE"}
-version = "0.0.6"
+version = "0.0.7"
 
 dependencies = []
 
@@ -57,6 +57,22 @@ docs = [
     "networkx",
     "matplotlib",
 ]
+
+server = [
+    "simplejson",
+]
+
+gui = [
+    "simplejson",  # Because built-in json parses nan and JS does not understand it
+    "black",
+    "isort",
+    "flask",
+    "flask-socketio >= 5.0",
+    "eventlet"
+]
+
+[project.scripts]
+nodify-gui = "nodify.gui.cli:nodify_gui_cli"
 
 
 [tool.pytest.ini_options]
@@ -132,24 +148,3 @@ extend-exclude = """
  | .*/\\..*
 )
 """
-
-
-[tool.cibuildwheel]
-build-verbosity = 3
-test-extras = "test"
-
-skip = [
-    "pp*",
-    "*musllinux*",
-]
-
-[tool.cibuildwheel.linux]
-
-[tool.cibuildwheel.windows]
-
-before-build = "pip install delvewheel"
-repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
-
-test-command = "pytest --pyargs nodify -m 'not slow'"
-
-[tool.cibuildwheel.macos]

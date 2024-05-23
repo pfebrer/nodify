@@ -10,7 +10,22 @@ try:
 except:
     _PLOTLY_AVAILABLE = False
 
-import numpy as np
+try:
+    import numpy as np
+
+    np_ndarray = np.ndarray
+    np_generic = np.generic
+    _NUMPY_AVAILABLE = True
+except:
+
+    class np_ndarray:
+        pass
+
+    class np_generic:
+        pass
+
+    _NUMPY_AVAILABLE = False
+
 import simplejson
 from simplejson.encoder import JSONEncoder
 
@@ -18,13 +33,17 @@ from nodify import Node
 
 
 def as_jsonable(encoder, obj):
-    if isinstance(obj, np.ndarray) and not np.issubdtype(obj.dtype, np.number):
+    if (
+        _NUMPY_AVAILABLE
+        and isinstance(obj, np_ndarray)
+        and not np.issubdtype(obj.dtype, np.number)
+    ):
         return as_jsonable(encoder, obj.tolist())
     elif isinstance(obj, (list, tuple)):
         return type(obj)([as_jsonable(encoder, v) for v in obj])
     elif isinstance(obj, dict):
         return {k: as_jsonable(encoder, v) for k, v in obj.items()}
-    elif not isinstance(obj, (tuple, float, str, int, bool, type(None), np.ndarray)):
+    elif not isinstance(obj, (tuple, float, str, int, bool, type(None), np_ndarray)):
         return as_jsonable(encoder, encoder.default(obj))
     else:
         return obj
@@ -160,9 +179,9 @@ class CustomJSONEncoder(JSONEncoder):
             return obj.to_plotly_json()
         elif hasattr(obj, "to_json"):
             return obj.to_json()
-        elif isinstance(obj, np.ndarray):
+        elif isinstance(obj, np_ndarray):
             return obj.tolist()
-        elif isinstance(obj, np.generic):
+        elif isinstance(obj, np_generic):
             return obj.item()
         elif isinstance(obj, pathlib.Path):
             return str(obj)

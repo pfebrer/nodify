@@ -5,7 +5,7 @@ import time
 from functools import wraps
 from io import BytesIO, StringIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from nodify import ConstantNode, Node, Workflow, nodify_module
 from nodify.conversions import node_to_python_script, python_script_to_nodes
@@ -34,6 +34,15 @@ def updates(key: str):
         return wrapper
 
     return decorator
+
+
+FILE_PLOT_REGISTRY = {}
+
+
+def register_file_plot_handler(
+    name: str, options_finder: Callable[[str], List[str]], handler: Callable
+):
+    FILE_PLOT_REGISTRY[name] = (options_finder, handler)
 
 
 class Session:
@@ -103,6 +112,51 @@ class Session:
         }
 
         self.allowed_nodifiable = []
+
+    def supports_file_plotting(self):
+        return len(FILE_PLOT_REGISTRY) > 0
+
+    def get_file_plot_options(self, file_name: str) -> List[str]:
+        options = []
+        for name, (options_finder, _) in FILE_PLOT_REGISTRY.items():
+            options.extend(options_finder(file_name))
+        return options
+
+    def plot_uploaded_file(
+        self,
+        name: str,
+        file_bytes: Optional[BytesIO] = None,
+        method: Optional[str] = None,
+        node_name: Optional[str] = None,
+        additional_files: Dict[str, BytesIO] = {},
+    ) -> int:
+        if file_bytes is None:
+            # We will assume that the file is already written.
+            file_name = Path(name)
+            keep = True
+            dirname = file_name.parent
+        else:
+            file_name, dirname, keep = self.write_file(file_bytes, name)
+
+        additional_files_info = []
+        for n, file in additional_files.items():
+            additional_files_info.append(self.write_file(file, n))
+
+        for name, (options_finder, handler) in FILE_PLOT_REGISTRY.items():
+            if method in options_finder(file_name):
+                plot = handler(file_name, method)
+                break
+
+        self.add_node(plot, node_name or name)
+
+        if not keep:
+            self._remove_temp_file(file_name, dirname)
+
+        for file_name, dirname, keep in additional_files_info:
+            if not keep:
+                self._remove_temp_file(file_name, dirname)
+
+        return id(plot)
 
     # Functions to receive uploaded files:
     def write_file(self, file_bytes, name):

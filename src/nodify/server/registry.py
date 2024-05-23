@@ -92,8 +92,7 @@ class NodifyServerRegistry(NodeClassRegistry):
         try:
             spec = self.get_node_class_spec(encoder, node_class)
             self._encoder.encode(spec)
-        except Exception as e:
-            print(node_class, e)
+        except:
             return
 
         self.node_class_specs[id(node_class)] = spec

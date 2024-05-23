@@ -104,6 +104,9 @@ def nodify_module(module: ModuleType, node_class: Type[Node] = Node) -> ModuleTy
     Also, some functions might not be convertable to nodes and therefore won't be found
     in the new module.
 
+    For each module that is found while traversing, its __nodify__ function is called
+    if it exists.
+
     Parameters
     ----------
     module : ModuleType
@@ -126,6 +129,10 @@ def nodify_module(module: ModuleType, node_class: Type[Node] = Node) -> ModuleTy
     def _nodified_module(
         module: ModuleType, visited: Dict[ModuleType, ModuleType], main_module: str
     ) -> ModuleType:
+        # Call the __nodify__ function on the module if it exists.
+        if hasattr(module, "__nodify__"):
+            module.__nodify__()
+
         # This module has already been visited, so do return the already nodified module.
         if module in visited:
             return visited[module]

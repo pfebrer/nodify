@@ -18,7 +18,7 @@ from ..session import Session
 from ..sync import Connection
 from .emiters import emit, emit_error, emit_session
 from .sync import SocketioConnection
-from .user_management import if_user_can, listen_to_users, with_user_management
+from .user_management import if_user_can  # , listen_to_users , with_user_management
 
 # Register the environment variables that the user can tweak
 register_env_variable(
@@ -73,7 +73,8 @@ class SocketioApp(App):
 
         # No user management yet
         if False:
-            with_user_management(self.app)
+            ...
+            # with_user_management(self.app)
 
         socketio = SocketIO(
             self.app,
@@ -92,7 +93,8 @@ class SocketioApp(App):
         on = socketio.on
 
         if False:
-            listen_to_users(on, emit_session)
+            ...
+            # listen_to_users(on, emit_session)
 
         connection = SocketioLastUpdateEmiter(socketio)
 
@@ -108,7 +110,6 @@ class SocketioApp(App):
         # -------------------------------------------
         @socketio.on_error()
         def send_error(err):
-            print("SOME ERROR", err)
             if self.session is not None:
                 self.session.logger.exception(err)
 
@@ -214,12 +215,11 @@ class SocketioApp(App):
     def get_server_address(self) -> str:
         return f"http://{self.host}:{self.port}"
 
-    @staticmethod
-    def open_frontend():
+    def open_frontend(self):
         """Opens the graphical interface"""
-        webbrowser.open(
-            str(Path(__file__).parent.parent.parent / "build" / "index.html")
-        )
+        from nodify.gui import open_frontend
+
+        open_frontend("socket", self.port, self.host)
 
     def launch(
         self,
@@ -249,8 +249,6 @@ class SocketioApp(App):
         interactive: bool, optional
             whether an interactive console should be started.
         """
-        if frontend:
-            self.open_frontend()
 
         if not server:
             return
@@ -280,6 +278,9 @@ class SocketioApp(App):
 
         for t in self.threads:
             t.start()
+
+        if frontend:
+            self.open_frontend()
 
         if interactive:
             try:
