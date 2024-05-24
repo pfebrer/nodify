@@ -15,7 +15,7 @@ def build_cli(title, description, defaults, modules=[]):
             "modules",
             type=str,
             nargs="*",
-            default=defaults.get("modules", ["f"]),
+            default=defaults.get("modules", []),
             help="Modules to nodify before launching the GUI",
         )
         parser.add_argument(

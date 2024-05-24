@@ -6,7 +6,7 @@ name = "nodify"
 description = "Supercharge your functional application with a powerful node system."
 readme = "README.md"
 license = {file = "LICENSE"}
-version = "0.0.8"
+version = "0.0.9"
 
 dependencies = []
 
