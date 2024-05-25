@@ -217,6 +217,27 @@ def test_args():
 
 
 @temporal_context(lazy=True)
+def test_pos_and_args():
+    """Checks that functions with *args are correctly handled by Node."""
+
+    @Node.from_func
+    def reduce_(offset, *nums, factor: int = 1):
+        val = offset
+        for num in nums:
+            val += num
+        return val * factor
+
+    val = reduce_(1, 2, 3, factor=2)
+
+    assert val.get() == 12
+
+    val2 = reduce_(val, 4, factor=1)
+
+    assert val2.get() == 16
+    assert val._nupdates == 1
+
+
+@temporal_context(lazy=True)
 def test_node_links_args():
     @Node.from_func
     def my_node(*some_args):

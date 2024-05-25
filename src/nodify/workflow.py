@@ -34,6 +34,12 @@ class NetworkDescriptor:
         return Network(owner)
 
 
+register_env_variable(
+    "NODIFY_EXPORT_VIZ",
+    default=False,
+)
+
+
 class Network:
     _workflow: Type[Workflow]
 
@@ -201,7 +207,7 @@ class Network:
         to_export: bool, optional
             Not important for normal use.
             Whether the notebook is thought to be exported to html.
-            If None, it is taken from the "NODES_EXPORT_VIS" environment variable.
+            If None, it is taken from the "NODIFY_EXPORT_VIZ" environment variable.
         """
         try:
             import matplotlib as mpl
@@ -214,7 +220,7 @@ class Network:
             )
 
         if to_export is None:
-            to_export = get_env_variable("NODES_EXPORT_VIS") != False
+            to_export = get_env_variable("NODIFY_EXPORT_VIZ") != False
 
         # Get the networkx directed graph
         graph = self.to_nx(
@@ -427,7 +433,7 @@ class Network:
             Whether the plot is to be displayed in a jupyter notebook.
         """
         if to_export is None:
-            to_export = get_env_variable("NODES_EXPORT_VIS") != False
+            to_export = get_env_variable("NODIFY_EXPORT_VIZ") != False
 
         # Get the html for the network plot.
         html_text = net.generate_html(notebook=notebook)
@@ -522,10 +528,10 @@ class Network:
         to_export: bool, optional
             Not important for normal use.
             Whether the notebook is thought to be exported to html.
-            If None, it is taken from the "NODES_EXPORT_VIS" environment variable.
+            If None, it is taken from the "NODIFY_EXPORT_VIZ" environment variable.
         """
         if to_export is None:
-            to_export = get_env_variable("NODES_EXPORT_VIS") != False
+            to_export = get_env_variable("NODIFY_EXPORT_VIZ") != False
 
         net = self.to_pyvis(
             colorscale=colorscale,
@@ -920,6 +926,16 @@ class Workflow(Node):
         work_func = cls.function
         # Get the signature of the function.
         sig = inspect.signature(work_func)
+
+        for k, param in sig.parameters.items():
+            if param.kind == inspect.Parameter.VAR_POSITIONAL:
+                raise TypeError(
+                    f"*args arguments are not supported for now in workflows (got *{k})"
+                )
+            elif param.kind == inspect.Parameter.VAR_KEYWORD:
+                raise TypeError(
+                    f"**kwargs arguments are not supported for now in workflows (got **{k})"
+                )
 
         # Nodify it, passing the middleware function that will assign the variables to the workflow.
         work_func = nodify_func(work_func, assign_fn=assign_workflow_var)

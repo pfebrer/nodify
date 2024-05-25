@@ -19,6 +19,8 @@ NODES_CONTEXT = dict(
     # Function that will be called after node initialization.
     # The function will receive the node instance as its only argument.
     on_init=None,
+    # Mode for batch iteration. Can be "zip" or "product".
+    batch_iter="zip",
 )
 
 # Temporal contexts stack. It should not be used directly by users, the aim of this

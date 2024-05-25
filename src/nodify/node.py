@@ -1,10 +1,22 @@
 from __future__ import annotations
 
 import inspect
+import itertools
 import logging
 from collections import ChainMap
 from io import StringIO
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from .context import NODES_CONTEXT, NodeContext
 from .errors import NodeCalcError, NodeError
@@ -68,6 +80,7 @@ class Node(OperatorsMixin):
 
     # Keys for variadic arguments, if present.
     _args_inputs_key: Optional[str] = None
+    _before_args_input_keys: List[str]
     _kwargs_inputs_key: Optional[str] = None
 
     # Dictionary containing the current inputs (might contain Node objects as values)
@@ -75,6 +88,8 @@ class Node(OperatorsMixin):
     # Dictionary containing the inputs that were used to calculate the last output.
     # (does not contain Node objects)
     _prev_evaluated_inputs: Dict[str, Any]
+    # Variable containing the last method used to handle batches.
+    _prev_batch_iter: Literal["zip", "product"] = "zip"
 
     # Current output value of the node
     _output: Any = _blank
@@ -202,10 +217,16 @@ class Node(OperatorsMixin):
             # Find out if there are arguments that are VAR_POSITIONAL (*args) or VAR_KEYWORD (**kwargs)
             # and register it so that they can be handled on init.
             cls._args_inputs_key = None
+            cls._before_args_input_keys = []
             cls._kwargs_inputs_key = None
+            keys = []
             for key, parameter in no_self_sig.parameters.items():
                 if parameter.kind == parameter.VAR_POSITIONAL:
                     cls._args_inputs_key = key
+                    cls._before_args_input_keys = keys
+                elif cls._args_inputs_key is None:
+                    keys.append(key)
+
                 if parameter.kind == parameter.VAR_KEYWORD:
                     cls._kwargs_inputs_key = key
 
@@ -276,6 +297,22 @@ class Node(OperatorsMixin):
         if set(self._prev_evaluated_inputs) != set(evaluated_inputs):
             return True
 
+        # Check if the batching method has changed, and if so, check if there
+        # are batches in the inputs.
+        if self._prev_batch_iter != self.context["batch_iter"]:
+            # Batching method has changed, are there batches in the inputs?
+            any_batch = [False]
+
+            def _is_batch(node):
+                if isinstance(node, Batch):
+                    any_batch[0] = True
+
+            self.map_inputs(evaluated_inputs, _is_batch)
+
+            if any_batch[0]:
+                return True
+
+        # As a last resort, check for inequalities in the inputs.
         def _is_equal(prev, curr):
             if prev is curr:
                 return True
@@ -289,7 +326,6 @@ class Node(OperatorsMixin):
             except:
                 return False
 
-        # Otherwise, check if the inputs remain the same.
         for key in self._prev_evaluated_inputs:
             # Get the previous and current values
             prev = self._prev_evaluated_inputs[key]
@@ -365,7 +401,14 @@ class Node(OperatorsMixin):
         kwargs = inputs.copy()
         args = ()
         if self._args_inputs_key is not None:
-            args = kwargs.pop(self._args_inputs_key, ())
+            args = []
+            # Add arguments that come before the *args key
+            for k in self._before_args_input_keys:
+                if k in kwargs:
+                    args.append(kwargs.pop(k))
+            # Then add the variadic positional arguments
+            args.extend(kwargs.pop(self._args_inputs_key, ()))
+            args = tuple(args)
         if self._kwargs_inputs_key is not None:
             kwargs_inputs = kwargs.pop(self._kwargs_inputs_key, {})
             kwargs.update(kwargs_inputs)
@@ -374,7 +417,7 @@ class Node(OperatorsMixin):
 
     @staticmethod
     def evaluate_input_node(node: Node):
-        return node.get()
+        return node.get() if not isinstance(node, Batch) else node
 
     def _get_evaluated_inputs(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Evaluates all inputs.
@@ -397,6 +440,99 @@ class Node(OperatorsMixin):
             func=self.evaluate_input_node,
             only_nodes=True,
         )
+
+    def _handle_batch(
+        self,
+        evaluated_inputs: Dict[str, Any],
+        is_batch_input: Dict[str, Any],
+    ) -> Batch:
+        """Gathers inputs that are batches and calls _get_batch to apply the function to them.
+
+        Parameters
+        ----------
+        evaluated_inputs:
+            The inputs of the node, already evaluated.
+        is_batch_input:
+            A dictionary indicating, for each input, whether they are a batch or not.
+        """
+        batch_inputs = {
+            k: evaluated_inputs[k] for k, v in is_batch_input.items() if v is True
+        }
+        args_batch_inputs = {}
+        if (
+            self._args_inputs_key is not None
+            and self._args_inputs_key in evaluated_inputs
+        ):
+            args_batch_inputs = {
+                i: evaluated_inputs[self._args_inputs_key][i]
+                for i, v in enumerate(is_batch_input[self._args_inputs_key])
+                if v is True
+            }
+        kwargs_batch_inputs = {}
+        if (
+            self._kwargs_inputs_key is not None
+            and self._kwargs_inputs_key in evaluated_inputs
+        ):
+            for k, v in evaluated_inputs[self._kwargs_inputs_key].items():
+                if is_batch_input[self._kwargs_inputs_key][k]:
+                    kwargs_batch_inputs[k] = v
+
+        return self._get_batch(
+            evaluated_inputs, batch_inputs, args_batch_inputs, kwargs_batch_inputs
+        )
+
+    def _get_batch(
+        self,
+        evaluated_inputs: Dict[str, Any],
+        batch_inputs: Dict[str, Batch],
+        args_batch_inputs: Dict[int, Batch],
+        kwargs_batch_inputs: Dict[str, Batch],
+    ) -> Batch:
+        """Handles the case in which the inputs contain batches.
+
+        Parameters
+        ----------
+        evaluated_inputs:
+            The inputs of the node, already evaluated.
+        batch_inputs:
+            The inputs that are batches.
+        args_batch_inputs:
+            The inputs passed to the variadic positional arguments that are batches.
+        kwargs_batch_inputs:
+            The inputs passed to the variadic keyword arguments that are batches.
+        """
+
+        keys = [*batch_inputs.keys(), *kwargs_batch_inputs.keys()]
+        iters = [*batch_inputs.values(), *kwargs_batch_inputs.values()]
+
+        args_keys = list(args_batch_inputs.keys())
+        args_iters = [v for v in args_batch_inputs.values()]
+
+        if self.context["batch_iter"] == "zip":
+            vals_iterator = zip(*iters, *args_iters)
+        elif self.context["batch_iter"] == "product":
+            vals_iterator = itertools.product(*iters, *args_iters)
+        else:
+            raise ValueError(f"Invalid batch_iter mode: {self.context['batch_iter']}")
+
+        outputs = []
+        for vals in vals_iterator:
+            inps = {**evaluated_inputs, **dict(zip(keys, vals[: len(iters)]))}
+            if self._args_inputs_key is not None and len(args_batch_inputs) > 0:
+                args_vals = vals[len(iters) :]
+                inps[self._args_inputs_key] = tuple(
+                    args_vals[args_keys.index(i)] if i in args_keys else val
+                    for i, val in enumerate(evaluated_inputs[self._args_inputs_key])
+                )
+
+            if self._kwargs_inputs_key is not None and len(kwargs_batch_inputs) > 0:
+                for k in kwargs_batch_inputs:
+                    inps[self._kwargs_inputs_key][k] = inps.pop(k)
+
+            args, kwargs = self._sanitize_inputs(inps)
+            outputs.append(self.function(*args, **kwargs))
+
+        return Batch(*outputs)
 
     def get(self):
         """Returns the output of the node, possibly running the computation.
@@ -421,8 +557,26 @@ class Node(OperatorsMixin):
 
         if self._outdated or self.is_output_outdated(evaluated_inputs):
             try:
-                args, kwargs = self._sanitize_inputs(evaluated_inputs)
-                self._output = self.function(*args, **kwargs)
+                # Check if there are batches
+                any_batch = [False]
+
+                def _is_batch(node):
+                    result = isinstance(node, Batch)
+                    if result:
+                        any_batch[0] = True
+                    return result
+
+                is_batch_input = self.map_inputs(evaluated_inputs, _is_batch)
+
+                self._prev_batch_iter = self.context["batch_iter"]
+                # If there are batches, gather them and return a batch object
+                if any_batch[0]:
+                    output = self._handle_batch(evaluated_inputs, is_batch_input)
+                else:
+                    args, kwargs = self._sanitize_inputs(evaluated_inputs)
+                    output = self.function(*args, **kwargs)
+
+                self._output = output
 
                 self._logger.info(f"Evaluated because inputs changed.")
             except Exception as e:
@@ -706,6 +860,21 @@ class Node(OperatorsMixin):
         return None
 
 
+class Batch(Node):
+    """Stores a batch of values.
+
+    This class signals to nodes that they should run their computation
+    for each value in the batch.
+    """
+
+    @staticmethod
+    def function(*items):
+        return items
+
+    def __iter__(self):
+        return iter(self.get())
+
+
 class DummyInputValue(Node):
     """A dummy node that can be used as a placeholder for input values."""
 
@@ -755,9 +924,12 @@ class UfuncNode(Node):
         return getattr(ufunc, method)(*inputs, **input_kwargs)
 
 
-class ConstantNode(Node):
+class Constant(Node):
     """Node that just returns its input value."""
 
     @staticmethod
     def function(value: Any):
         return value
+
+
+ConstantNode = Constant

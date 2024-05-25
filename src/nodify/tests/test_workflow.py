@@ -161,6 +161,36 @@ def test_positional_arguments(triple_sum):
 
 
 # *args and **kwargs are not supported for now in workflows.
+def test_args():
+
+    with pytest.raises(TypeError):
+
+        @Workflow.from_func
+        def some_workflow(*args):
+            return args
+
+    with pytest.raises(TypeError):
+
+        @Workflow.from_func
+        def some_workflow(*args):
+            return args[0]
+
+
+def test_kwargs():
+
+    with pytest.raises(TypeError):
+
+        @Workflow.from_func
+        def some_workflow(**kwargs):
+            return kwargs
+
+    with pytest.raises(TypeError):
+
+        @Workflow.from_func
+        def some_workflow(*args):
+            return kwargs["key"]
+
+
 # def test_kwargs_not_overriden():
 
 #     @Node.from_func
