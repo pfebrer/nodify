@@ -1,12 +1,24 @@
-from __future__ import annotations
-
 import operator
 from typing import Any, Dict, Literal
 
 from .node import Node
 
+__all__ = [
+    "ListNode",
+    "TupleNode",
+    "DictNode",
+    "ConditionalExpressionNode",
+    "CompareNode",
+    "BinaryOperationNode",
+    "UnaryOperationNode",
+    "GetItemNode",
+    "GetAttrNode",
+]
+
 
 class ListNode(Node):
+    """Creates a list"""
+
     @staticmethod
     def function(*items):
         return list(items)
@@ -36,7 +48,7 @@ class DictNode(Node):
 class ConditionalExpressionNode(Node):
     _outdate_due_to_inputs: bool = False
 
-    def get_syntax(self, test, true, false):
+    def get_syntax(self, test: bool, true: Any, false: Any):
         return f"{repr(true)} if {repr(test)} else {repr(false)}"
 
     def _get_evaluated_inputs(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
@@ -118,7 +130,7 @@ class ConditionalExpressionNode(Node):
                         return super()._receive_outdated()
 
     @staticmethod
-    def function(test, true, false):
+    def function(test: bool, true: Any, false: Any):
         return true if test else false
 
     def get_diagram_label(self):
@@ -143,13 +155,13 @@ class CompareNode(Node):
         None: "compare",
     }
 
-    def get_syntax(self, left, op, right):
+    def get_syntax(self, left: Any, op: _CompareOp, right: Any):
         if not isinstance(op, str):
             raise ValueError(f"Invalid operator: {op}")
         return f"{repr(left)} {self._op_to_symbol[op]} {repr(right)}"
 
     @staticmethod
-    def function(left, op: _CompareOp, right):
+    def function(left: Any, op: _CompareOp, right: Any):
         return getattr(operator, op)(left, right)
 
     def get_diagram_label(self):
@@ -191,10 +203,10 @@ class BinaryOperationNode(Node):
     }
 
     @staticmethod
-    def function(left, op: _BynaryOp, right):
+    def function(left: Any, op: _BynaryOp, right: Any):
         return getattr(operator, op)(left, right)
 
-    def get_syntax(self, left, op, right):
+    def get_syntax(self, left: Any, op: _BynaryOp, right: Any):
         if not isinstance(op, str):
             raise ValueError(f"Invalid operator: {op}")
         return f"{repr(left)} {self._op_to_symbol[op]} {repr(right)}"
@@ -211,10 +223,10 @@ class UnaryOperationNode(Node):
     }
 
     @staticmethod
-    def function(op: _UnaryOp, operand):
+    def function(op: _UnaryOp, operand: Any):
         return getattr(operator, op)(operand)
 
-    def get_syntax(self, op, operand):
+    def get_syntax(self, op: _UnaryOp, operand: Any):
         if not isinstance(op, str):
             raise ValueError(f"Invalid operator: {op}")
         return f"{self._op_to_symbol[op]}{repr(operand)}"
@@ -225,7 +237,7 @@ class GetItemNode(Node):
     def function(obj: Any, key: Any):
         return obj[key]
 
-    def get_syntax(self, obj, key):
+    def get_syntax(self, obj: Any, key: Any):
         return f"{repr(obj)}[{repr(key)}]"
 
 
@@ -234,5 +246,5 @@ class GetAttrNode(Node):
     def function(obj: Any, key: str):
         return getattr(obj, key)
 
-    def get_syntax(self, obj, key):
+    def get_syntax(self, obj: Any, key: str):
         return f"{repr(obj)}.{key}"

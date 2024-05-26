@@ -6,6 +6,14 @@ from typing import Any, Callable, Dict, Sequence, Type
 
 from .node import Node
 
+__all__ = [
+    "StopTraverse",
+    "traverse_tree_forward",
+    "traverse_tree_backward",
+    "visit_all_connected",
+    "nodify_module",
+]
+
 
 class StopTraverse(Exception):
     """Exception that should be raised by callback functions to stop the traversal of a tree."""

@@ -810,6 +810,24 @@ class WorkflowNodes:
 
 
 class Workflow(Node):
+    """Base class for workflows.
+
+    When a subclass of Workflow is created, the function from which is created is
+    transformed into a workflow.
+
+    The difference between a workflow and a node is that a workflow has its computation
+    split into smaller parts.
+
+    Examples
+    --------
+
+    Let's say you have a function ``some_function``. You can create a workflow from it like:
+
+    >>> from nodify import Workflow
+    >>> Workflow.from_func(some_function)
+
+    """
+
     # The nodes of the initial dry run. This is a class property
     # that helps us understand the flow of the workflow.
     dryrun_nodes: WorkflowNodes
