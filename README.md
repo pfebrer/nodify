@@ -12,4 +12,4 @@ it would look something like this:
 
 -------------------------------------
 
-Do you want to start nodifying? Check the [documentation]()!
+Do you want to start nodifying? Check the [documentation](https://pfebrer.github.io/nodify/)!
