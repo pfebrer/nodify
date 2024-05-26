@@ -39,14 +39,14 @@ jobs:
         run: |
           cd docs
           make html
-          rm -rf build/html/_sources
-          touch build/html/.nojekyll
+          rm -rf _build/html/_sources
+          touch _build/html/.nojekyll
           cd ..
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: docs/build/html
+          path: docs/_build/html
 
   # Deployment job
   deploy:
