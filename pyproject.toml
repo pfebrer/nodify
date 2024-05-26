@@ -56,7 +56,7 @@ docs = [
     "pyvis",
     "networkx",
     "matplotlib",
-    "ipython"
+    "ipykernel"
 ]
 
 server = [
