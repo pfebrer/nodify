@@ -6,9 +6,9 @@ it would look something like this:
 
 -------------------------------------
 
-| **nodify**
-| verb
-| *The art of converting python functions into nodes and connecting them to create a workflow. Once you start nodifying, you can't stop doing it.*
+**nodify**, verb
+
+*The art of converting python functions into nodes and connecting them to create a workflow. Once you start nodifying, you can't stop doing it.*
 
 -------------------------------------
 
