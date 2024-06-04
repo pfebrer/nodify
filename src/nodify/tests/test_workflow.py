@@ -67,6 +67,16 @@ def triple_sum(request) -> Type[Workflow]:
                 return first_sum + c
 
         triple_sum._sum_key = "BinaryOperationNode"
+    elif request.param == "node_tree":
+        ...
+
+        # def triple_sum(a, b, c):
+        #     first_sum = a + b
+        #     return first_sum + c
+
+        # node = triple_sum(ConstantNode(2), ConstantNode(3), ConstantNode(5))
+
+        # triple_sum = Workflow.from_node_tree(node, )
 
     return triple_sum
 

@@ -338,7 +338,7 @@ def test_node_links_kwargs():
     assert node2._input_nodes["some_kwargs[a]"] is node3
 
 
-def test_ufunc(sum_node):
+def test_op(sum_node):
     node = sum_node(1, 3)
 
     assert node.get() == 4
@@ -346,3 +346,16 @@ def test_ufunc(sum_node):
     node2 = node + 6
 
     assert node2.get() == 10
+
+
+def test_op_update(sum_node):
+
+    node = sum_node(1)
+
+    result = node + 6
+
+    assert result(input2=3) == 10
+
+    result = abs(node)
+
+    assert result(input2=-3) == 2

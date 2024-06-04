@@ -202,6 +202,10 @@ class BinaryOperationNode(Node):
         "or": "|",
     }
 
+    def __call__(self, *args, **kwargs):
+        self.recursive_update_inputs(*args, **kwargs)
+        return self.get()
+
     @staticmethod
     def function(left: Any, op: _BynaryOp, right: Any):
         return getattr(operator, op)(left, right)
@@ -221,6 +225,10 @@ class UnaryOperationNode(Node):
         "neg": "-",
         "pos": "+",
     }
+
+    def __call__(self, *args, **kwargs):
+        self.recursive_update_inputs(*args, **kwargs)
+        return self.get()
 
     @staticmethod
     def function(op: _UnaryOp, operand: Any):

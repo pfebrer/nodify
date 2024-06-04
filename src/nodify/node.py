@@ -654,15 +654,15 @@ class Node(OperatorsMixin):
 
         def _update(node):
             if cls is None or isinstance(self, cls):
-                node.update_inputs(**inputs)
 
+                sig = node.__signature__
                 update_inputs = {}
-                # Update the inputs of the node
-                for k in self.inputs:
-                    if k in inputs:
+                for k in inputs:
+                    if k in sig.parameters:
                         update_inputs[k] = inputs[k]
 
-                self.update_inputs(**update_inputs)
+                if len(update_inputs) > 0:
+                    node.update_inputs(**update_inputs)
 
         traverse_tree_backward([self], _update)
 
