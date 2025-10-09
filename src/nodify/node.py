@@ -580,7 +580,7 @@ class Node(OperatorsMixin):
 
                 self._output = output
 
-                self._logger.info(f"Evaluated because inputs changed.")
+                self._logger.debug(f"Evaluated because inputs changed.")
             except Exception as e:
                 self._logger.exception(e)
                 self.logs += logs.stream.getvalue()
@@ -599,7 +599,7 @@ class Node(OperatorsMixin):
             self._errored = False
             self._error = None
         else:
-            self._logger.info(f"No need to evaluate")
+            self._logger.debug(f"No need to evaluate")
 
         self._logger.debug(f"Output: {self._output}.")
 
